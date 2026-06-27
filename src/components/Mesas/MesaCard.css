@@ -1,0 +1,51 @@
+/* src/components/Mesas/MesaCard.css */
+.mesa {
+  background-color: #262626;
+  border-radius: 8px;
+  padding: 20px 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid transparent;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.mesa:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.mesa .numero-mesa {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 5px;
+}
+
+.mesa .estado-texto {
+  font-size: 0.85rem;
+  color: #e0e0e0;
+}
+
+.mesa .detalle-ocupada {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-top: 5px;
+}
+
+/* Estados */
+.mesa.disponible {
+  border-color: #2e7d32;
+}
+
+.mesa.ocupada {
+  border-color: #c62828;
+}
+
+.mesa.reservada {
+  border-color: #f59e0b;
+}

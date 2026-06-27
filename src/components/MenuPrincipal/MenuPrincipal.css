@@ -1,0 +1,75 @@
+/* src/components/MenuPrincipal/MenuPrincipal.css */
+.menu-principal {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.menu-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.menu-header h1 {
+  color: #ff4500;
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.menu-header p {
+  color: #a0a0a0;
+  font-size: 1.1rem;
+}
+
+.contenedor-modulos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.tarjeta-modulo {
+  background-color: #262626;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.tarjeta-modulo:hover {
+  transform: translateY(-5px);
+  border-color: #ff4500;
+}
+
+.tarjeta-modulo .icono {
+  font-size: 3.5rem;
+  margin-bottom: 15px;
+}
+
+.tarjeta-modulo h2 {
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.tarjeta-modulo p {
+  color: #b0b0b0;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  min-height: 60px;
+}
+
+.tarjeta-modulo button {
+  background-color: #ff4500;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tarjeta-modulo button:hover {
+  background-color: #e03e00;
+}

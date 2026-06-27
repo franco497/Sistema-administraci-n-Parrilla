@@ -1,0 +1,30 @@
+/* src/pages/Dashboard.css */
+.dashboard-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 20px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: white;
+}
+
+.seccion-en-construccion {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.seccion-en-construccion h2 {
+  color: white;
+  margin-top: 20px;
+}
+
+.seccion-en-construccion p {
+  color: #a0a0a0;
+  font-size: 1.1rem;
+}
