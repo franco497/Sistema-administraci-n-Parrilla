@@ -1,0 +1,167 @@
+/* src/components/Mesas/FormularioReservaSimple.css */
+
+.formulario-reserva-simple {
+  padding: 5px 0;
+  color: #e0e0e0;
+}
+
+.reserva-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.reserva-header h3 {
+  color: #ff4500;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.campo-form {
+  margin-bottom: 20px;
+}
+
+.campo-form label {
+  display: block;
+  color: #b0b0b0;
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.campo-form .obligatorio {
+  color: #ff4500;
+  font-weight: bold;
+}
+
+.campo-form input {
+  width: 100%;
+  padding: 12px 14px;
+  background: #262626;
+  border: 2px solid #333;
+  border-radius: 10px;
+  color: white;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.campo-form input:focus {
+  outline: none;
+  border-color: #ff4500;
+  box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.15);
+}
+
+.campo-form input.error {
+  border-color: #c62828;
+}
+
+.campo-form input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.campo-form .mensaje-error {
+  color: #c62828;
+  font-size: 0.85rem;
+  margin-top: 5px;
+  display: block;
+}
+
+.info-reserva {
+  background: #1a1a1a;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 15px 0 20px 0;
+  border: 1px solid #2a2a2a;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #252525;
+  font-size: 0.95rem;
+}
+
+.info-item:last-of-type {
+  border-bottom: none;
+}
+
+.info-item span {
+  color: #888;
+}
+
+.info-item strong {
+  color: #fff;
+}
+
+.info-nota {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #252525;
+  text-align: center;
+}
+
+.info-nota small {
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.acciones-formulario {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.acciones-formulario button {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.acciones-formulario button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-guardar-reserva {
+  background: #2d6a4f;
+  color: white;
+  box-shadow: 0 2px 8px rgba(45, 106, 79, 0.3);
+}
+
+.btn-guardar-reserva:hover:not(:disabled) {
+  background: #1b5e20;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.4);
+}
+
+.btn-cancelar-reserva {
+  background: #444;
+  color: white;
+}
+
+.btn-cancelar-reserva:hover:not(:disabled) {
+  background: #555;
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .acciones-formulario {
+    flex-direction: column;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+}
