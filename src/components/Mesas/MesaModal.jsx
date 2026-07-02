@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useRestaurante } from "../../context/RestauranteContext";
 import FormularioReservaSimple from "./FormularioReservaSimple";
+import { generarFacturaPDF } from "../../services/pdfService";
 import "./MesaModal.css";
 
 const MesaModal = ({ mesaId, onClose }) => {
@@ -24,7 +25,10 @@ const MesaModal = ({ mesaId, onClose }) => {
   const reservaExistente = obtenerReservaPorMesa(mesaId);
   const pedidoId = pedidosActivos[mesaId];
 
-  const [adultos, setAdultos] = useState(mesa.adultos || 0);
+  // ✅ ESTADO LOCAL PARA EL NOMBRE DE LA RESERVA (PERSISTE DURANTE EL MODAL)
+  const [nombreReservaLocal, setNombreReservaLocal] = useState("");
+
+  const [adultos, setAdults] = useState(mesa.adultos || 0);
   const [menores, setMenores] = useState(mesa.menores || 0);
   const [itemsPedido, setItemsPedido] = useState([]);
   const [total, setTotal] = useState(0);
@@ -34,9 +38,25 @@ const MesaModal = ({ mesaId, onClose }) => {
   const [cantidades, setCantidades] = useState({});
   const [mensaje, setMensaje] = useState("");
 
-  // Cargar items del pedido al abrir el modal
+  // ✅ INICIALIZAR nombreReservaLocal al abrir el modal
   useEffect(() => {
     console.log("🔄 useEffect - mesaId:", mesaId, "pedidoId:", pedidoId);
+
+    // ✅ OBTENER RESERVA DESDE EL ESTADO GLOBAL
+    const reservaActual = obtenerReservaPorMesa(mesaId);
+    console.log("📌 Reserva actual para mesa", mesaId, ":", reservaActual);
+
+    if (reservaActual) {
+      console.log("📝 Reserva encontrada:", reservaActual.nombre_cliente);
+      setNombreReservaLocal(reservaActual.nombre_cliente);
+    } else if (mesa.reservaNombre) {
+      console.log("📝 Usando mesa.reservaNombre:", mesa.reservaNombre);
+      setNombreReservaLocal(mesa.reservaNombre);
+    } else {
+      console.log("📝 Sin reserva, nombre local vacío");
+      setNombreReservaLocal("");
+    }
+
     if (pedidoId) {
       cargarItemsPedido();
     } else {
@@ -44,7 +64,7 @@ const MesaModal = ({ mesaId, onClose }) => {
       setItemsPedido([]);
       setTotal(0);
     }
-  }, [pedidoId, mesaId]);
+  }, [pedidoId, mesaId, mesa.reservaNombre, obtenerReservaPorMesa]); // ✅ Agregar dependencias
 
   // Función para cargar items y calcular total
   const cargarItemsPedido = async () => {
@@ -74,12 +94,8 @@ const MesaModal = ({ mesaId, onClose }) => {
         console.log("📊 Items recibidos:", items);
         setItemsPedido(items);
 
-        // Calcular total con formato
         const totalCalculado = items.reduce((sum, item) => {
           const subtotal = parseFloat(item.subtotal) || 0;
-          console.log(
-            `💰 Item: ${item.productos?.nombre}, subtotal: ${subtotal}`,
-          );
           return sum + subtotal;
         }, 0);
 
@@ -108,11 +124,7 @@ const MesaModal = ({ mesaId, onClose }) => {
     }));
   };
 
-  // Agregar item al pedido
-  // src/components/Mesas/MesaModal.jsx
-  // Reemplaza la función handleAgregarItem
-
-  // Agregar item al pedido - CON FORZADO DE ACTUALIZACIÓN
+  // ✅ Agregar item al pedido - SIN RECARGAR EL MODAL COMPLETO
   const handleAgregarItem = async (productoId) => {
     const cantidad = cantidades[productoId] || 0;
     console.log(
@@ -138,18 +150,9 @@ const MesaModal = ({ mesaId, onClose }) => {
 
       if (result.success) {
         setMensaje(`✅ ${cantidad}x agregado correctamente`);
-
-        // ESPERAR un momento para que el estado se actualice
         await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Forzar recarga de items
-        console.log("🔄 Forzando recarga de items...");
         await cargarItemsPedido();
-
-        // Resetear cantidad
         setCantidades((prev) => ({ ...prev, [productoId]: 0 }));
-
-        // Limpiar mensaje después de 2 segundos
         setTimeout(() => setMensaje(""), 2000);
       } else {
         console.error("❌ Error al agregar:", result.error);
@@ -163,14 +166,13 @@ const MesaModal = ({ mesaId, onClose }) => {
     }
   };
 
-  // CALCULAR TOTAL - Función mejorada
+  // CALCULAR TOTAL
   const calcularTotal = async () => {
     console.log("🔄 CALCULAR TOTAL - mesaId:", mesaId, "pedidoId:", pedidoId);
     setMensaje("🔄 Calculando total...");
     setLoading(true);
 
     try {
-      // Recargar items desde la base de datos
       if (pedidoId) {
         console.log("📤 Cargando items desde la BD...");
         await cargarItemsPedido();
@@ -178,7 +180,6 @@ const MesaModal = ({ mesaId, onClose }) => {
         setMensaje(`💰 Total calculado: $${total.toLocaleString()}`);
       } else {
         console.log("⚠️ No hay pedido activo");
-        // Verificar si hay items en el estado local
         if (itemsPedido.length > 0) {
           const totalCalculado = itemsPedido.reduce((sum, item) => {
             return sum + (parseFloat(item.subtotal) || 0);
@@ -192,7 +193,6 @@ const MesaModal = ({ mesaId, onClose }) => {
         }
       }
 
-      // Mostrar el mensaje por 3 segundos
       setTimeout(() => {
         if (!mensaje.includes("Error")) {
           setMensaje("");
@@ -214,14 +214,14 @@ const MesaModal = ({ mesaId, onClose }) => {
       return;
     }
 
-    setMensaje(`✅ Pedido guardado - Total: $${total}`);
+    setMensaje(`✅ Pedido guardado - Total: $${total.toLocaleString()}`);
     setTimeout(() => {
       setMensaje("");
       onClose();
     }, 1500);
   };
 
-  // Cobrar y liberar
+  // ✅ COBRAR Y LIBERAR - Usa nombreReservaLocal
   const handleCobrar = async () => {
     if (itemsPedido.length === 0) {
       setMensaje("⚠️ No hay items en el pedido para cobrar");
@@ -229,29 +229,58 @@ const MesaModal = ({ mesaId, onClose }) => {
       return;
     }
 
+    // ✅ Usar el nombre de la reserva local o "Consumidor Final"
+    const nombreCliente = nombreReservaLocal || "Consumidor Final";
+    console.log("👤 Nombre del cliente para la factura:", nombreCliente);
+
     const confirmar = confirm(
-      `¿Cobrar $${total.toLocaleString()} de la Mesa ${mesaId}?`,
+      `¿Cobrar $${total.toLocaleString()} de la Mesa ${mesaId}?\n\n` +
+        `Cliente: ${nombreCliente}\n` +
+        `📄 Se generará una factura en PDF`,
     );
+
     if (!confirmar) return;
 
     setLoading(true);
-    setMensaje("🔄 Procesando cobro...");
+    setMensaje("🔄 Procesando cobro y generando PDF...");
 
     try {
       const result = await cobrarPedido(mesaId);
+
       if (result.success) {
+        const pedidoCompleto = {
+          id_pedido: result.pedidoId,
+          total: result.total,
+          estado: "pagado",
+          created_at: new Date().toISOString(),
+        };
+
+        try {
+          generarFacturaPDF(pedidoCompleto, itemsPedido, mesaId, {
+            nombre: nombreCliente,
+          });
+          console.log("✅ PDF generado correctamente para:", nombreCliente);
+        } catch (pdfError) {
+          console.error("❌ Error generando PDF:", pdfError);
+          setMensaje("⚠️ Pedido cobrado pero hubo error al generar el PDF");
+          setTimeout(() => setMensaje(""), 3000);
+        }
+
         setMensaje(
           `✅ Pedido cobrado. Total: $${result.total.toLocaleString()}`,
         );
+        setItemsPedido([]);
+        setTotal(0);
+
         setTimeout(() => {
           setMensaje("");
           onClose();
-        }, 1500);
+        }, 2000);
       } else {
         setMensaje(`❌ Error al cobrar: ${result.error}`);
       }
     } catch (error) {
-      console.error("Error cobrando:", error);
+      console.error("❌ Error cobrando:", error);
       setMensaje("❌ Error al procesar el cobro");
     } finally {
       setLoading(false);
@@ -293,7 +322,7 @@ const MesaModal = ({ mesaId, onClose }) => {
     }
   };
 
-  // Cancelar reserva
+  // ✅ Cancelar reserva - Limpia nombreReservaLocal
   const handleCancelarReserva = async () => {
     if (!reservaExistente) {
       setMensaje("⚠️ No hay reserva para cancelar");
@@ -313,6 +342,7 @@ const MesaModal = ({ mesaId, onClose }) => {
       const result = await cancelarReserva(mesaId, reservaExistente.id_reserva);
       if (result.success) {
         setMensaje("✅ Reserva cancelada correctamente");
+        setNombreReservaLocal(""); // ✅ LIMPIAR NOMBRE LOCAL
         setMostrarFormularioReserva(false);
         setTimeout(() => setMensaje(""), 2000);
       } else {
@@ -321,34 +351,6 @@ const MesaModal = ({ mesaId, onClose }) => {
     } catch (error) {
       console.error("Error cancelando reserva:", error);
       setMensaje("❌ Error al cancelar la reserva");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Junto con las otras funciones de manejo
-  const handleForzarPedido = async () => {
-    console.log('🆕 Forzando creación de pedido para mesa:', mesaId);
-    
-    setLoading(true);
-    setMensaje('🔄 Creando pedido...');
-    
-    try {
-      const result = await crearPedido(mesaId);
-      console.log('📥 Resultado:', result);
-      
-      if (result.success) {
-        setMensaje(`✅ Pedido creado con ID: ${result.data.id_pedido}`);
-        setTimeout(() => {
-          onClose();
-          window.location.reload();
-        }, 1000);
-      } else {
-        setMensaje(`❌ Error: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('❌ Error creando pedido:', error);
-      setMensaje(`❌ Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -368,125 +370,54 @@ const MesaModal = ({ mesaId, onClose }) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        {/* ========================================== */}
         {/* HEADER */}
-        {/* ========================================== */}
-
         <div className="modal-header">
           <h2>Mesa {mesaId}</h2>
           {pedidoId && <span className="badge-pedido">Pedido #{pedidoId}</span>}
           {mesa.estado === "ocupada" && (
             <span className="badge-ocupada">🟢 Ocupada</span>
           )}
+          {/* ✅ Mostrar reserva usando nombreReservaLocal */}
+          {nombreReservaLocal && (
+            <span className="badge-reservada">📅 {nombreReservaLocal}</span>
+          )}
         </div>
 
-        {/* ========================================== */}
-        {/* 🐛 BOTÓN DE DEPURACIÓN - COLOCAR AQUÍ */}
-        {/* ========================================== */}
-        <button
-          className="btn-debug"
-          onClick={() => {
-            console.log("🔍 ===== ESTADO ACTUAL =====");
-            console.log("📌 mesaId:", mesaId);
-            console.log("📌 pedidoId:", pedidoId);
-            console.log("📌 pedidosActivos:", pedidosActivos);
-            console.log("📌 itemsPedido:", itemsPedido);
-            console.log("📌 total:", total);
-            console.log("📌 mesa.estado:", mesa.estado);
-            console.log("📌 mesa:", mesa);
-            console.log("📌 reservaExistente:", reservaExistente);
-
-            alert(
-              `🔍 DEBUG\n\n` +
-                `Mesa: ${mesaId}\n` +
-                `Pedido ID: ${pedidoId || "❌ Sin pedido"}\n` +
-                `Items: ${itemsPedido.length}\n` +
-                `Total: $${total}\n` +
-                `Estado: ${mesa.estado}\n` +
-                `Reserva: ${reservaExistente ? reservaExistente.nombre_cliente : "No"}`,
-            );
-          }}
-          style={{
-            background: "#444",
-            color: "white",
-            border: "1px solid #666",
-            padding: "6px 12px",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "0.75rem",
-            marginBottom: "12px",
-            width: "100%",
-            fontWeight: "bold",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => (e.target.style.background = "#555")}
-          onMouseLeave={(e) => (e.target.style.background = "#444")}
-        >
-          🐛 Debug - Ver Estado
-        </button>
-
-        {/* 🆕 BOTÓN PARA FORZAR CREACIÓN DE PEDIDO */}
-        <button
-          className="btn-debug"
-          onClick={async () => {
-            console.log("🆕 Forzando creación de pedido para mesa:", mesaId);
-            const result = await crearPedido(mesaId);
-            console.log("📥 Resultado:", result);
-            if (result.success) {
-              alert(`✅ Pedido creado con ID: ${result.data.id_pedido}`);
-              // Forzar recarga
-              window.location.reload();
-            } else {
-              alert(`❌ Error: ${result.error}`);
-            }
-          }}
-          style={{
-            background: "#2d6a4f",
-            color: "white",
-            border: "1px solid #3d7a5f",
-            padding: "6px 12px",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "0.75rem",
-            marginBottom: "12px",
-            width: "100%",
-            fontWeight: "bold",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => (e.target.style.background = "#1b5e20")}
-          onMouseLeave={(e) => (e.target.style.background = "#2d6a4f")}
-        >
-          🆕 Forzar Crear Pedido
-        </button>
-
-        {/* Mensaje de estado */}
+        {/* MENSAJE DE ESTADO */}
         {mensaje && (
           <div
-            className={`mensaje-estado ${mensaje.includes("Error") || mensaje.includes("⚠️") ? "error" : "success"}`}
+            className={`mensaje-estado ${
+              mensaje.includes("Error") || mensaje.includes("⚠️")
+                ? "error"
+                : "success"
+            }`}
           >
             {mensaje}
           </div>
         )}
 
-        {/* Sección de Reserva */}
+        {/* SECCIÓN DE RESERVA */}
         <div className="reserva-section">
-          {mesa.estado === "reservada" && reservaExistente ? (
+          {nombreReservaLocal ? (
+            // ✅ Usar nombreReservaLocal para mostrar la reserva
             <>
               <div className="reserva-activa">
                 <div className="reserva-icono">📅</div>
                 <div className="reserva-info">
                   <p className="reserva-cliente">
-                    <strong>{reservaExistente.nombre_cliente}</strong>
+                    <strong>{nombreReservaLocal}</strong>
                   </p>
-                  <p className="reserva-detalle">
-                    <span>
-                      🗓️{" "}
-                      {new Date(
-                        reservaExistente.fecha_reserva,
-                      ).toLocaleDateString("es-AR")}
-                    </span>
-                    <span>🕐 {reservaExistente.hora_reserva}</span>
-                  </p>
+                  {reservaExistente && (
+                    <p className="reserva-detalle">
+                      <span>
+                        🗓️{" "}
+                        {new Date(
+                          reservaExistente.fecha_reserva,
+                        ).toLocaleDateString("es-AR")}
+                      </span>
+                      <span>🕐 {reservaExistente.hora_reserva}</span>
+                    </p>
+                  )}
                 </div>
               </div>
               <button
@@ -521,31 +452,7 @@ const MesaModal = ({ mesaId, onClose }) => {
           )}
         </div>
 
-        {/* Personas en la mesa */}
-        <div className="personas-grupo">
-          <label>
-            👨 Adultos:
-            <input
-              type="number"
-              min="0"
-              value={adultos}
-              onChange={(e) => setAdultos(parseInt(e.target.value) || 0)}
-              disabled={loading}
-            />
-          </label>
-          <label>
-            👦 Menores:
-            <input
-              type="number"
-              min="0"
-              value={menores}
-              onChange={(e) => setMenores(parseInt(e.target.value) || 0)}
-              disabled={loading}
-            />
-          </label>
-        </div>
-
-        {/* Menú de productos */}
+        {/* MENÚ DE PRODUCTOS */}
         <h4>🍽️ Menú</h4>
         <div className="menu-productos">
           {Object.values(productosPorCategoria).map(
@@ -598,7 +505,7 @@ const MesaModal = ({ mesaId, onClose }) => {
           )}
         </div>
 
-        {/* Lista de items del pedido actual */}
+        {/* LISTA DE ITEMS DEL PEDIDO */}
         {itemsPedido.length > 0 && (
           <>
             <h4>📋 Pedido Actual</h4>
@@ -618,13 +525,13 @@ const MesaModal = ({ mesaId, onClose }) => {
           </>
         )}
 
-        {/* Total - Mejorado con formato */}
+        {/* TOTAL */}
         <div className="total-display">
           <span>💰 Total a Pagar:</span>
           <span className="total-monto">${total.toLocaleString()}</span>
         </div>
 
-        {/* Botones de acción */}
+        {/* BOTONES DE ACCIÓN */}
         <div className="modal-acciones">
           <button
             className="btn-calcular"

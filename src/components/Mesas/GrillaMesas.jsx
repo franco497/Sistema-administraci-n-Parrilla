@@ -1,9 +1,9 @@
 // src/components/Mesas/GrillaMesas.jsx
-import React, { useState } from 'react';
-import { useRestaurante } from '../../context/RestauranteContext';
-import MesaCard from './MesaCard';
-import MesaModal from './MesaModal';
-import './GrillaMesas.css';
+import React, { useState } from "react";
+import { useRestaurante } from "../../context/RestauranteContext";
+import MesaCard from "./MesaCard";
+import MesaModal from "./MesaModal";
+import "./GrillaMesas.css";
 
 const GrillaMesas = ({ onVolver }) => {
   const { mesas } = useRestaurante();
@@ -38,10 +38,7 @@ const GrillaMesas = ({ onVolver }) => {
       </div>
 
       {mesaSeleccionada && (
-        <MesaModal
-          mesaId={mesaSeleccionada}
-          onClose={handleCerrarModal}
-        />
+        <MesaModal mesaId={mesaSeleccionada} onClose={handleCerrarModal} />
       )}
     </div>
   );

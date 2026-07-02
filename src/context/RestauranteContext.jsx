@@ -132,13 +132,76 @@ export const RestauranteProvider = ({ children }) => {
         .in("estado", ["pendiente", "confirmada"]);
 
       if (resError) throw resError;
+      console.log("📊 Reservas activas encontradas:", reservasData);
+
+      // ✅ GUARDAR reservas en el estado
       setReservas(reservasData || []);
       console.log("✅ Reservas cargadas:", reservasData?.length || 0);
 
-      // 4. 🔥 Cargar pedidos activos
-      await cargarPedidosActivos();
+      // 4. Cargar pedidos activos
+      const { data: pedidosData, error: pedError } = await supabase
+        .from("pedidos")
+        .select("id_pedido, id_mesa, total")
+        .eq("estado", "activo");
+
+      if (pedError) throw pedError;
+      console.log("📊 Pedidos activos encontrados:", pedidosData?.length || 0);
+
+      // 5. ✅ CREAR EL ESTADO DE LAS MESAS DESDE CERO
+      const nuevasMesas = {};
+
+      // Inicializar todas las mesas (1-44)
+      for (let i = 1; i <= 44; i++) {
+        nuevasMesas[i] = {
+          id: i,
+          estado: "disponible",
+          adultos: 0,
+          menores: 0,
+          consumos: {},
+          reservaId: null,
+          reservaNombre: "",
+          pedidoId: null,
+        };
+      }
+
+      // ✅ APLICAR RESERVAS (prioridad 1)
+      reservasData.forEach((reserva) => {
+        if (nuevasMesas[reserva.id_mesa]) {
+          nuevasMesas[reserva.id_mesa] = {
+            ...nuevasMesas[reserva.id_mesa],
+            estado: "reservada",
+            reservaId: reserva.id_reserva,
+            reservaNombre: reserva.nombre_cliente,
+          };
+          console.log(
+            `📌 Mesa ${reserva.id_mesa} → RESERVADA (${reserva.nombre_cliente})`,
+          );
+        }
+      });
+
+      // ✅ APLICAR PEDIDOS ACTIVOS (prioridad 2 - SOBREESCRIBE reservas)
+      const nuevosPedidosActivos = {};
+      pedidosData.forEach((pedido) => {
+        nuevosPedidosActivos[pedido.id_mesa] = pedido.id_pedido;
+
+        if (nuevasMesas[pedido.id_mesa]) {
+          nuevasMesas[pedido.id_mesa] = {
+            ...nuevasMesas[pedido.id_mesa],
+            estado: "ocupada", // ← OCUPADA prevalece sobre RESERVADA
+            pedidoId: pedido.id_pedido,
+          };
+          console.log(
+            `🪑 Mesa ${pedido.id_mesa} → OCUPADA (Pedido #${pedido.id_pedido})`,
+          );
+        }
+      });
+
+      // ✅ ACTUALIZAR ESTADOS FINALES
+      setMesas(nuevasMesas);
+      setPedidosActivos(nuevosPedidosActivos);
 
       console.log("✅ Todos los datos cargados correctamente");
+      console.log("📊 Estado final de mesas:", nuevasMesas);
     } catch (error) {
       console.error("❌ Error cargando datos:", error);
     } finally {
@@ -346,14 +409,17 @@ export const RestauranteProvider = ({ children }) => {
   };
 
   // --- FUNCIÓN: Cobrar pedido ---
+
   const cobrarPedido = async (mesaId) => {
     try {
+      console.log("🔄 cobrarPedido - mesaId:", mesaId);
+
       const pedidoId = pedidosActivos[mesaId];
       if (!pedidoId) {
         throw new Error("No hay pedido activo para esta mesa");
       }
 
-      // Obtener el total antes de cobrar
+      // 1. Obtener el total
       const { data: pedido, error: pedError } = await supabase
         .from("pedidos")
         .select("total")
@@ -362,7 +428,7 @@ export const RestauranteProvider = ({ children }) => {
 
       if (pedError) throw pedError;
 
-      // Marcar pedido como pagado
+      // 2. Marcar pedido como pagado
       const { error } = await supabase
         .from("pedidos")
         .update({ estado: "pagado" })
@@ -370,7 +436,34 @@ export const RestauranteProvider = ({ children }) => {
 
       if (error) throw error;
 
-      // Liberar mesa
+      // 3. ✅ BUSCAR SI LA MESA TIENE RESERVA ACTIVA
+      const reservaActiva = reservas.find((r) => r.id_mesa === mesaId);
+      console.log("📌 Reserva activa encontrada:", reservaActiva);
+
+      // 4. ✅ SI HAY RESERVA → MARCARLA COMO COMPLETADA
+      if (reservaActiva) {
+        console.log(
+          `📌 Completando reserva de ${reservaActiva.nombre_cliente} en mesa ${mesaId}`,
+        );
+
+        const { error: resError } = await supabase
+          .from("reservas")
+          .update({ estado: "completada" })
+          .eq("id_reserva", reservaActiva.id_reserva);
+
+        if (resError) {
+          console.error("❌ Error completando reserva:", resError);
+        } else {
+          // ✅ Eliminar reserva del estado local
+          setReservas((prev) =>
+            prev.filter((r) => r.id_reserva !== reservaActiva.id_reserva),
+          );
+          console.log("✅ Reserva completada y eliminada del estado local");
+        }
+      }
+
+      // 5. ✅ ACTUALIZAR MESA A DISPONIBLE (SIEMPRE)
+      console.log(`🪑 Mesa ${mesaId} → DISPONIBLE`);
       setMesas((prev) => ({
         ...prev,
         [mesaId]: {
@@ -378,22 +471,20 @@ export const RestauranteProvider = ({ children }) => {
           estado: "disponible",
           adultos: 0,
           menores: 0,
-          pedidoId: null,
+          consumos: {},
           reservaId: null,
           reservaNombre: "",
+          pedidoId: null,
         },
       }));
 
-      // Eliminar pedido activo
+      // 6. Eliminar pedido activo
       const newPedidosActivos = { ...pedidosActivos };
       delete newPedidosActivos[mesaId];
       setPedidosActivos(newPedidosActivos);
 
-      return {
-        success: true,
-        total: pedido.total,
-        pedidoId: pedidoId,
-      };
+      console.log("✅ Pedido cobrado correctamente. Total:", pedido.total);
+      return { success: true, total: pedido.total, pedidoId: pedidoId };
     } catch (error) {
       console.error("❌ Error cobrando pedido:", error);
       return { success: false, error: error.message };
@@ -403,11 +494,14 @@ export const RestauranteProvider = ({ children }) => {
   // --- FUNCIÓN: Cancelar pedido ---
   const cancelarPedido = async (mesaId) => {
     try {
+      console.log("🔄 cancelarPedido - mesaId:", mesaId);
+
       const pedidoId = pedidosActivos[mesaId];
       if (!pedidoId) {
         throw new Error("No hay pedido activo");
       }
 
+      // 1. Cancelar el pedido en la base de datos
       const { error } = await supabase
         .from("pedidos")
         .update({ estado: "cancelado" })
@@ -415,24 +509,56 @@ export const RestauranteProvider = ({ children }) => {
 
       if (error) throw error;
 
-      // Liberar mesa
-      setMesas((prev) => ({
-        ...prev,
-        [mesaId]: {
-          id: mesaId,
-          estado: "disponible",
-          adultos: 0,
-          menores: 0,
-          pedidoId: null,
-          reservaId: null,
-          reservaNombre: "",
-        },
-      }));
+      // 2. ✅ BUSCAR SI LA MESA TIENE RESERVA ACTIVA
+      const reservaActiva = reservas.find((r) => r.id_mesa === mesaId);
+      console.log("📌 Reserva activa encontrada:", reservaActiva);
 
+      // 3. ✅ ACTUALIZAR ESTADO DE LA MESA
+      setMesas((prev) => {
+        // Si tiene reserva activa → volver a RESERVADA
+        if (reservaActiva) {
+          console.log(
+            `📌 Mesa ${mesaId} → RESTAURANDO RESERVA (${reservaActiva.nombre_cliente})`,
+          );
+          return {
+            ...prev,
+            [mesaId]: {
+              id: mesaId,
+              estado: "reservada",
+              adultos: 0,
+              menores: 0,
+              consumos: {},
+              reservaId: reservaActiva.id_reserva,
+              reservaNombre: reservaActiva.nombre_cliente,
+              pedidoId: null,
+            },
+          };
+        }
+        // Si NO tiene reserva → disponible
+        else {
+          console.log(`🪑 Mesa ${mesaId} → DISPONIBLE (sin reserva)`);
+          return {
+            ...prev,
+            [mesaId]: {
+              id: mesaId,
+              estado: "disponible",
+              adultos: 0,
+              menores: 0,
+              consumos: {},
+              reservaId: null,
+              reservaNombre: "",
+              pedidoId: null,
+            },
+          };
+        }
+      });
+
+      // 4. Eliminar pedido activo
       const newPedidosActivos = { ...pedidosActivos };
       delete newPedidosActivos[mesaId];
       setPedidosActivos(newPedidosActivos);
 
+      console.log("✅ Pedido cancelado correctamente");
       return { success: true };
     } catch (error) {
       console.error("❌ Error cancelando pedido:", error);
@@ -488,12 +614,20 @@ export const RestauranteProvider = ({ children }) => {
   // --- FUNCIÓN: Cancelar reserva ---
   const cancelarReserva = async (mesaId, reservaId) => {
     try {
+      console.log(
+        "🔄 cancelarReserva - mesaId:",
+        mesaId,
+        "reservaId:",
+        reservaId,
+      );
+
       if (!reservaId) {
         const reserva = reservas.find((r) => r.id_mesa === mesaId);
         if (!reserva) throw new Error("No se encontró la reserva");
         reservaId = reserva.id_reserva;
       }
 
+      // 1. Cancelar reserva en Supabase
       const { error } = await supabase
         .from("reservas")
         .update({ estado: "cancelada" })
@@ -501,18 +635,45 @@ export const RestauranteProvider = ({ children }) => {
 
       if (error) throw error;
 
+      // 2. ✅ ELIMINAR RESERVA DEL ESTADO LOCAL
       setReservas((prev) => prev.filter((r) => r.id_reserva !== reservaId));
 
-      setMesas((prev) => ({
-        ...prev,
-        [mesaId]: {
-          ...prev[mesaId],
-          estado: "disponible",
-          reservaId: null,
-          reservaNombre: "",
-        },
-      }));
+      // 3. ✅ ACTUALIZAR MESA A DISPONIBLE (si no tiene pedido activo)
+      setMesas((prev) => {
+        const mesaActual = prev[mesaId];
 
+        // Si la mesa tiene pedido activo → mantener OCUPADA
+        if (mesaActual.pedidoId) {
+          console.log(`🪑 Mesa ${mesaId} → OCUPADA (pedido activo)`);
+          return {
+            ...prev,
+            [mesaId]: {
+              ...mesaActual,
+              reservaId: null,
+              reservaNombre: "",
+            },
+          };
+        }
+        // Si no tiene pedido → DISPONIBLE
+        else {
+          console.log(`🪑 Mesa ${mesaId} → DISPONIBLE (sin reserva)`);
+          return {
+            ...prev,
+            [mesaId]: {
+              id: mesaId,
+              estado: "disponible",
+              adultos: 0,
+              menores: 0,
+              consumos: {},
+              reservaId: null,
+              reservaNombre: "",
+              pedidoId: null,
+            },
+          };
+        }
+      });
+
+      console.log("✅ Reserva cancelada correctamente");
       return { success: true };
     } catch (error) {
       console.error("❌ Error cancelando reserva:", error);

@@ -1,5 +1,8 @@
 /* src/components/Mesas/MesaModal.css */
 
+/* ==========================================
+   MODAL OVERLAY
+   ========================================== */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -15,6 +18,9 @@
   padding: 20px;
 }
 
+/* ==========================================
+   MODAL CONTENT
+   ========================================== */
 .modal-content {
   background: #1a1a1a;
   border-radius: 16px;
@@ -35,6 +41,9 @@
   border-radius: 10px;
 }
 
+/* ==========================================
+   HEADER
+   ========================================== */
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -56,7 +65,63 @@
   font-weight: bold;
 }
 
-/* Sección de Reserva */
+.badge-ocupada {
+  background: #c62828;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.badge-reservada {
+  background: #f59e0b;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* ==========================================
+   MENSAJE DE ESTADO
+   ========================================== */
+.mensaje-estado {
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-align: center;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mensaje-estado.success {
+  background: rgba(45, 106, 79, 0.2);
+  border: 1px solid rgba(45, 106, 79, 0.3);
+  color: #4caf50;
+}
+
+.mensaje-estado.error {
+  background: rgba(198, 40, 40, 0.2);
+  border: 1px solid rgba(198, 40, 40, 0.3);
+  color: #ef5350;
+}
+
+/* ==========================================
+   SECCIÓN DE RESERVA
+   ========================================== */
 .reserva-section {
   background: rgba(245, 158, 11, 0.05);
   border: 1px solid rgba(245, 158, 11, 0.2);
@@ -151,7 +216,9 @@
   transform: translateY(-2px);
 }
 
-/* Personas */
+/* ==========================================
+   PERSONAS EN LA MESA
+   ========================================== */
 .personas-grupo {
   display: flex;
   justify-content: space-around;
@@ -179,7 +246,9 @@
   text-align: center;
 }
 
-/* Menú de productos */
+/* ==========================================
+   MENÚ DE PRODUCTOS
+   ========================================== */
 .menu-productos {
   max-height: 300px;
   overflow-y: auto;
@@ -285,7 +354,9 @@
   cursor: not-allowed;
 }
 
-/* Items del pedido */
+/* ==========================================
+   ITEMS DEL PEDIDO
+   ========================================== */
 .items-pedido {
   background: #1a1a1a;
   border-radius: 8px;
@@ -325,11 +396,13 @@
   font-weight: bold;
 }
 
-/* Total */
+/* ==========================================
+   TOTAL
+   ========================================== */
 .total-display {
   background: #2d6a4f;
   color: white;
-  padding: 15px;
+  padding: 15px 20px;
   border-radius: 10px;
   display: flex;
   justify-content: space-between;
@@ -337,13 +410,23 @@
   font-size: 1.1rem;
   font-weight: bold;
   margin-bottom: 15px;
+  transition: all 0.3s;
+}
+
+.total-display:hover {
+  background: #1b5e20;
+  transform: scale(1.01);
 }
 
 .total-monto {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
+  color: #ffd700;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Botones de acción */
+/* ==========================================
+   BOTONES DE ACCIÓN
+   ========================================== */
 .modal-acciones {
   display: flex;
   flex-direction: column;
@@ -416,7 +499,9 @@
   color: white;
 }
 
-/* Responsive */
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
 @media (max-width: 480px) {
   .modal-content {
     padding: 15px;
@@ -440,73 +525,4 @@
     width: 100%;
     justify-content: flex-end;
   }
-}
-
-/* Mensaje de estado */
-.mensaje-estado {
-  padding: 10px 15px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  font-weight: 500;
-  font-size: 0.9rem;
-  text-align: center;
-  animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.mensaje-estado.success {
-  background: rgba(45, 106, 79, 0.2);
-  border: 1px solid rgba(45, 106, 79, 0.3);
-  color: #4caf50;
-}
-
-.mensaje-estado.error {
-  background: rgba(198, 40, 40, 0.2);
-  border: 1px solid rgba(198, 40, 40, 0.3);
-  color: #ef5350;
-}
-
-.badge-ocupada {
-  background: #c62828;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: bold;
-}
-
-/* Mejoras en el total */
-.total-display {
-  background: #2d6a4f;
-  color: white;
-  padding: 15px 20px;
-  border-radius: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-bottom: 15px;
-  transition: all 0.3s;
-}
-
-.total-display:hover {
-  background: #1b5e20;
-  transform: scale(1.01);
-}
-
-.total-monto {
-  font-size: 1.4rem;
-  color: #ffd700;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
