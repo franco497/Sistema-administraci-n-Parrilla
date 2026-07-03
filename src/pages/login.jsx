@@ -1,3 +1,4 @@
+// src/pages/login.jsx
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -14,7 +15,9 @@ function Login() {
     setError("");
 
     try {
+      // ✅ OBTENER LA URL ACTUAL (para que funcione en local y producción)
       const currentUrl = window.location.origin;
+      console.log("📍 URL actual:", currentUrl);
 
       const { error } = await supabase.auth.signInWithOtp({
         email: email,

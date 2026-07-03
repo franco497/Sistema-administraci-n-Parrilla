@@ -29,14 +29,7 @@ function App() {
 
   if (authLoading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
         <h2 style={{ color: "white" }}>Cargando...</h2>
       </div>
     );
