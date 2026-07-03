@@ -12,10 +12,10 @@ export const useRestaurante = () => {
   return context;
 };
 
-// Estado inicial de mesas (44 mesas)
+// Estado inicial de mesas (47 mesas)
 const crearEstadoInicialMesas = () => {
   const mesas = {};
-  for (let i = 1; i <= 44; i++) {
+  for (let i = 1; i <= 47; i++) {
     mesas[i] = {
       id: i,
       estado: "disponible",
@@ -150,8 +150,8 @@ export const RestauranteProvider = ({ children }) => {
       // 5. ✅ CREAR EL ESTADO DE LAS MESAS DESDE CERO
       const nuevasMesas = {};
 
-      // Inicializar todas las mesas (1-44)
-      for (let i = 1; i <= 44; i++) {
+      // Inicializar todas las mesas (1-47)
+      for (let i = 1; i <= 47; i++) {
         nuevasMesas[i] = {
           id: i,
           estado: "disponible",

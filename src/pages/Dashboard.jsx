@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useRestaurante } from '../context/RestauranteContext';
 import MenuPrincipal from '../components/MenuPrincipal/MenuPrincipal';
 import GrillaMesas from '../components/Mesas/GrillaMesas';
+import LogoutButton from '../components/LogoutButton';  // ← Importar
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -27,6 +28,9 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
+      {/* ✅ Botón de Cerrar Sesión - Siempre visible */}
+      <LogoutButton />
+
       {vistaActual === 'principal' && (
         <MenuPrincipal onSeleccionarModulo={handleSeleccionarModulo} />
       )}

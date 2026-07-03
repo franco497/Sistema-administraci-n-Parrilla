@@ -23,7 +23,7 @@ const GrillaMesas = ({ onVolver }) => {
         <button className="btn-volver" onClick={onVolver}>
           ⬅ Volver al Menú
         </button>
-        <h2>📋 Distribución del Salón (44 Mesas)</h2>
+        <h2>📋 Distribución del Salón (47 Mesas)</h2>
       </div>
 
       <div className="contenedor-mesas">
