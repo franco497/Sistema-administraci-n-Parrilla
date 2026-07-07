@@ -211,56 +211,189 @@ export const generarFacturaPDF = (pedido, items, mesaNumero, cliente = null) => 
 
 // Función para generar ticket pequeño (formato térmico)
 export const generarTicketPDF = (pedido, items, mesaNumero) => {
+  // 📏 CONFIGURACIÓN PARA IMPRESORA TÉRMICA 58mm
   const doc = new jsPDF({
     unit: 'mm',
-    format: [80, 200]
+    format: [58, 250], // Ancho 58mm, altura dinámica (250mm es suficiente)
+    compress: true
   });
   
-  const pageWidth = 80;
-  const margin = 5;
+  const pageWidth = 58;
+  const margin = 3;
+  const maxWidth = pageWidth - (margin * 2);
   
-  // Header - TEXTO SEGURO
-  doc.setFontSize(14);
-  doc.setTextColor(200, 70, 0);
-  doc.text('Parrilla Milver', pageWidth / 2, 10, { align: 'center' });
+  // ==========================================
+  // HEADER - LOGO Y TÍTULO
+  // ==========================================
+  let yPos = 5;
   
-  doc.setFontSize(10);
-  doc.setTextColor(50);
-  doc.text(`Pedido #${pedido.id_pedido}`, pageWidth / 2, 18, { align: 'center' });
-  doc.text(`Mesa ${mesaNumero}`, pageWidth / 2, 24, { align: 'center' });
+  // Título principal (centrado)
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.text('Parrilla Milver', pageWidth / 2, yPos, { align: 'center' });
   
-  doc.setDrawColor(200);
+  yPos += 5;
+  
+  // Línea separadora (punteada)
+  doc.setDrawColor(0);
   doc.setLineWidth(0.3);
-  doc.line(margin, 28, pageWidth - margin, 28);
+  doc.setLineDashPattern([1, 1], 0);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
+  doc.setLineDashPattern([], 0);
   
-  let yPos = 34;
+  yPos += 4;
   
-  // Items - TEXTO SEGURO
-  doc.setFontSize(9);
-  items.forEach(item => {
-    const nombreProducto = textoParaPDF(item.productos?.nombre || 'Producto');
-    doc.text(`${item.cantidad}x ${nombreProducto}`, margin, yPos);
-    doc.text(formatearMoneda(item.subtotal), pageWidth - margin, yPos, { align: 'right' });
-    yPos += 6;
-  });
+  // ==========================================
+  // DATOS DEL PEDIDO
+  // ==========================================
+  doc.setFontSize(8);
+  doc.setTextColor(50);
   
+  // Número de pedido y mesa
+  const pedidoTexto = `#${pedido.id_pedido}  |  Mesa ${mesaNumero}`;
+  doc.text(pedidoTexto, pageWidth / 2, yPos, { align: 'center' });
+  
+  yPos += 4;
+  
+  // Fecha
+  const fechaLimpia = textoParaPDF(formatearFecha(pedido.created_at));
+  doc.text(fechaLimpia, pageWidth / 2, yPos, { align: 'center' });
+  
+  yPos += 4;
+  
+  // Cliente
+  const nombreCliente = textoParaPDF(pedido.cliente_nombre || 'Consumidor Final');
+  doc.text(`Cliente: ${nombreCliente}`, margin, yPos);
+  
+  yPos += 5;
+  
+  // Línea separadora
+  doc.setDrawColor(0);
+  doc.setLineWidth(0.2);
   doc.line(margin, yPos, pageWidth - margin, yPos);
   yPos += 4;
   
-  // Total
+  // ==========================================
+  // ENCABEZADO DE PRODUCTOS
+  // ==========================================
+  doc.setFontSize(8);
+  doc.setTextColor(0);
+  doc.setFont(undefined, 'bold');
+  
+  // Cabecera: Cantidad, Producto, Total
+  const colCant = 8;
+  const colProducto = 32;
+  const colTotal = 12;
+  
+  doc.text('Cant', margin, yPos);
+  doc.text('Producto', margin + colCant, yPos);
+  doc.text('Total', pageWidth - margin - colTotal, yPos, { align: 'right' });
+  
+  yPos += 3;
+  doc.setDrawColor(200);
+  doc.setLineWidth(0.2);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
+  yPos += 3;
+  
+  // ==========================================
+  // LISTA DE PRODUCTOS
+  // ==========================================
+  doc.setFontSize(7);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(30);
+  
+  items.forEach((item) => {
+    const nombreProducto = textoParaPDF(item.productos?.nombre || 'Producto');
+    const cantidad = item.cantidad;
+    const subtotal = formatearMoneda(item.subtotal);
+    
+    // Producto y cantidad en la misma línea
+    const lineaProducto = `${cantidad}x ${nombreProducto}`;
+    const textWidth = doc.getTextWidth(lineaProducto);
+    
+    // Si el producto es muy largo, truncar
+    let textoMostrar = lineaProducto;
+    if (textWidth > (maxWidth - colTotal - 4)) {
+      // Truncar y agregar "..."
+      while (doc.getTextWidth(textoMostrar + '...') > (maxWidth - colTotal - 4) && textoMostrar.length > 5) {
+        textoMostrar = textoMostrar.slice(0, -1);
+      }
+      textoMostrar = textoMostrar + '...';
+    }
+    
+    doc.text(textoMostrar, margin, yPos);
+    doc.text(subtotal, pageWidth - margin - colTotal, yPos, { align: 'right' });
+    
+    yPos += 4;
+    
+    // Si hay demasiados items, ajustar para que quepan
+    if (yPos > 220) {
+      doc.addPage();
+      yPos = 5;
+    }
+  });
+  
+  yPos += 3;
+  
+  // Línea separadora
+  doc.setDrawColor(0);
+  doc.setLineWidth(0.2);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
+  yPos += 4;
+  
+  // ==========================================
+  // RESUMEN DE PAGO
+  // ==========================================
+  
+  // Subtotal
+  doc.setFontSize(8);
+  doc.setTextColor(80);
+  doc.text('Subtotal:', margin, yPos);
+  doc.text(formatearMoneda(pedido.total), pageWidth - margin, yPos, { align: 'right' });
+  
+  yPos += 4;
+  
+  // Línea separadora
+  doc.setDrawColor(200);
+  doc.setLineWidth(0.2);
+  doc.setLineDashPattern([2, 2], 0);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
+  doc.setLineDashPattern([], 0);
+  yPos += 4;
+  
+  // TOTAL (destacado)
   doc.setFontSize(12);
-  doc.setTextColor(200, 70, 0);
+  doc.setTextColor(0);
   doc.setFont(undefined, 'bold');
   doc.text('TOTAL:', margin, yPos);
   doc.text(formatearMoneda(pedido.total), pageWidth - margin, yPos, { align: 'right' });
   doc.setFont(undefined, 'normal');
   
-  yPos += 8;
-  doc.setFontSize(8);
-  doc.setTextColor(150);
-  doc.text('¡Gracias!', pageWidth / 2, yPos, { align: 'center' });
+  yPos += 6;
   
-  doc.save(`Ticket_${pedido.id_pedido}_Mesa_${mesaNumero}.pdf`);
+  // Línea separadora final
+  doc.setDrawColor(0);
+  doc.setLineWidth(0.3);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
+  yPos += 5;
+  
+  // ==========================================
+  // PIE DE PÁGINA
+  // ==========================================
+  doc.setFontSize(7);
+  doc.setTextColor(100);
+  doc.text('¡Gracias por su visita!', pageWidth / 2, yPos, { align: 'center' });
+  
+  yPos += 4;
+  doc.setFontSize(6);
+  doc.setTextColor(150);
+  doc.text('Parrilla Milver - Todos los derechos reservados', pageWidth / 2, yPos, { align: 'center' });
+  
+  // ==========================================
+  // DESCARGAR TICKET
+  // ==========================================
+  const nombreArchivo = `Ticket_${pedido.id_pedido}_Mesa_${mesaNumero}.pdf`;
+  doc.save(nombreArchivo);
 };
 
 // Función para generar comprobante simple

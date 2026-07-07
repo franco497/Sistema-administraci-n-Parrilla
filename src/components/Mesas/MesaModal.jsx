@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { useRestaurante } from "../../context/RestauranteContext";
 import FormularioReservaSimple from "./FormularioReservaSimple";
-import { generarFacturaPDF } from "../../services/pdfService";
+/* import { generarFacturaPDF } from "../../services/pdfService"; */
+import { generarFacturaPDF, generarTicketPDF } from '../../services/pdfService';
 import "./MesaModal.css";
 
 const MesaModal = ({ mesaId, onClose }) => {
@@ -256,9 +257,10 @@ const MesaModal = ({ mesaId, onClose }) => {
         };
 
         try {
-          generarFacturaPDF(pedidoCompleto, itemsPedido, mesaId, {
+/*           generarFacturaPDF(pedidoCompleto, itemsPedido, mesaId, {
             nombre: nombreCliente,
-          });
+          }); */
+          generarTicketPDF(pedidoCompleto, itemsPedido, mesaId);
           console.log("✅ PDF generado correctamente para:", nombreCliente);
         } catch (pdfError) {
           console.error("❌ Error generando PDF:", pdfError);

@@ -8,3 +8,20 @@ console.log("URL:", supabaseUrl);
 console.log("Key existe:", !!supabaseAnonKey);
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey); 
+
+export const getRedirectUrl = () => {
+  const hostname = window.location.hostname;
+  const port = window.location.port;
+  const protocol = window.location.protocol;
+
+  // Detectar si es localhost
+  const isLocal = hostname === "localhost" || hostname === "5173";
+
+  if (isLocal) {
+    // Para local: usa el puerto actual
+    return `${protocol}//${hostname}:${port}/auth/callback`;
+  }
+
+  // Para producción (Netlify)
+  return "https://sistema-admin-parrilla-milver.netlify.app/auth/callback";
+};
