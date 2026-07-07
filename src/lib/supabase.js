@@ -1,27 +1,29 @@
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;  
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 console.log("🔍 Verificando conexión Supabase:");
 console.log("URL:", supabaseUrl);
 console.log("Key existe:", !!supabaseAnonKey);
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey); 
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const getRedirectUrl = () => {
   const hostname = window.location.hostname;
   const port = window.location.port;
   const protocol = window.location.protocol;
 
-  // Detectar si es localhost
-  const isLocal = hostname === "localhost" || hostname === "5173";
+  // ✅ CORRECCIÓN: Detectar correctamente localhost
+  const isLocal = hostname === "localhost" || hostname === "127.0.0.1";
+
+  console.log("📍 Detectando entorno:", { hostname, port, isLocal });
 
   if (isLocal) {
-    // Para local: usa el puerto actual
-    return `${protocol}//${hostname}:${port}/auth/callback`;
+    // ✅ CORRECCIÓN: Incluir el # para HashRouter
+    return `${protocol}//${hostname}:${port}/#/auth/callback`;
   }
 
-  // Para producción (Netlify)
-  return "https://sistema-admin-parrilla-milver.netlify.app/auth/callback";
+  // ✅ CORRECCIÓN: Incluir el # para HashRouter en producción
+  return "https://sistema-admin-parrilla-milver.netlify.app/#/auth/callback";
 };

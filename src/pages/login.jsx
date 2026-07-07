@@ -1,6 +1,5 @@
-// src/pages/login.jsx
 import { useState } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase, getRedirectUrl } from "../lib/supabase"; // ✅ Importar getRedirectUrl
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -15,14 +14,16 @@ function Login() {
     setError("");
 
     try {
-      // ✅ OBTENER LA URL ACTUAL (para que funcione en local y producción)
-      const currentUrl = window.location.origin;
-      console.log("📍 URL actual:", currentUrl);
+      // ✅ CORRECCIÓN: Usar getRedirectUrl en lugar de window.location.origin
+      const redirectUrl = getRedirectUrl();
+      
+      console.log("📧 Enviando magic link a:", email);
+      console.log("🔗 Redirect URL:", redirectUrl);
 
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
-          emailRedirectTo: `${currentUrl}/auth/callback`,
+          emailRedirectTo: redirectUrl, // ✅ Usar redirectUrl
         },
       });
 
