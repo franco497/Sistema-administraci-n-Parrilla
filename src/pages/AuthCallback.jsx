@@ -8,13 +8,17 @@ function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        // ✅ Log para ver dónde estamos
+        console.log("📍 AuthCallback - URL actual:", window.location.href);
+        console.log("📍 AuthCallback - Hash:", window.location.hash);
+        
         // ✅ Obtener la sesión
         const {
           data: { session },
           error,
         } = await supabase.auth.getSession();
 
-        // ✅ Verificar también el hash de la URL (por si hay token)
+        // ✅ Verificar también el hash de la URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
@@ -26,7 +30,6 @@ function AuthCallback() {
         if (session || accessToken) {
           setStatus("✅ ¡Login exitoso! Redirigiendo...");
           
-          // Contador regresivo para mejor UX
           let counter = 3;
           setCountdown(counter);
           
@@ -35,7 +38,8 @@ function AuthCallback() {
             setCountdown(counter);
             if (counter <= 0) {
               clearInterval(interval);
-              window.location.href = "/dashboard";
+              // ✅ Usar HashRouter correctamente
+              window.location.href = "/#/dashboard";
             }
           }, 1000);
           
@@ -44,14 +48,14 @@ function AuthCallback() {
         } else {
           setStatus("❌ No se pudo autenticar. Redirigiendo...");
           setTimeout(() => {
-            window.location.href = "/";
+            window.location.href = "/#/";
           }, 2000);
         }
       } catch (error) {
         console.error("❌ Error en callback:", error);
         setStatus(`❌ Error: ${error.message || "Error de autenticación"}`);
         setTimeout(() => {
-          window.location.href = "/";
+          window.location.href = "/#/";
         }, 3000);
       }
     };
@@ -62,7 +66,6 @@ function AuthCallback() {
   return (
     <div className="auth-callback-container">
       <div className="auth-callback-content">
-        {/* Spinner animado */}
         <div style={{ 
           width: '50px', 
           height: '50px', 
@@ -81,7 +84,6 @@ function AuthCallback() {
         
         <h2 className="auth-callback-status">{status}</h2>
         
-        {/* Mostrar contador si hay redirección inminente */}
         {status.includes("Redirigiendo") && countdown > 0 && (
           <p style={{ marginTop: '10px', color: '#666' }}>
             Redirigiendo en {countdown} segundos...
