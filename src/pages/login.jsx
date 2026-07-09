@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase, getRedirectUrl } from "../lib/supabase";
+import { supabase, getRedirectUrl } from "../lib/supabase"; // ✅ Importar función
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -14,32 +14,25 @@ function Login() {
     setError("");
 
     try {
-      // ✅ Asegurarse de que getRedirectUrl se ejecute en el momento del envío
+      // ✅ CORRECCIÓN: Usar getRedirectUrl()
       const redirectUrl = getRedirectUrl();
       
       console.log("📧 Enviando magic link a:", email);
-      console.log("🔗 Redirect URL (desde Login):", redirectUrl);
+      console.log("🔗 Redirect URL:", redirectUrl);
 
-      // ✅ Verificar que la URL sea correcta antes de enviar
-      if (!redirectUrl || !redirectUrl.startsWith('http')) {
-        throw new Error(`URL de redirección inválida: ${redirectUrl}`);
-      }
-
-      const { data, error } = await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
-          emailRedirectTo: redirectUrl,
+          emailRedirectTo: redirectUrl, // ✅ Usar la URL correcta
         },
       });
-
-      console.log("📦 Respuesta de Supabase:", data);
 
       if (error) throw error;
 
       setMessage(`✨ ¡Magic link enviado a ${email}! Revisa tu correo.`);
       setEmail("");
     } catch (err) {
-      console.error("❌ Error completo:", err);
+      console.error("Error:", err);
       setError(err.message || "Error al enviar el magic link");
     } finally {
       setLoading(false);
