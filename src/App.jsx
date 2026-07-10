@@ -6,6 +6,7 @@ import { RestauranteProvider } from "./context/RestauranteContext";
 import Login from "./pages/login";
 import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
+import MesaView from "./pages/MesaView";  // ← IMPORTAR
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -47,6 +48,11 @@ function App() {
           <Route
             path="/dashboard"
             element={session ? <Dashboard /> : <Navigate to="/" />}
+          />
+          {/* ✅ NUEVA RUTA: Vista de mesa */}
+          <Route
+            path="/mesa/:mesaId"
+            element={session ? <MesaView /> : <Navigate to="/" />}
           />
           <Route path="*" element={<NotFound />} />
         </Routes>

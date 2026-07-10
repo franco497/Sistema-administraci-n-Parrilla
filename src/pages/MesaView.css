@@ -1,0 +1,490 @@
+/* src/pages/MesaView.css */
+
+.mesa-view-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 20px;
+  color: #fff;
+}
+
+/* HEADER */
+.mesa-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.btn-volver-mesa {
+  background: #444;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.btn-volver-mesa:hover {
+  background: #555;
+  transform: translateY(-2px);
+}
+
+.mesa-view-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.header-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge-pedido {
+  background: #2d6a4f;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.badge-ocupada {
+  background: #c62828;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.badge-reservada {
+  background: #f59e0b;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* MENSAJE */
+.mensaje-estado {
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-weight: 500;
+  text-align: center;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mensaje-estado.success {
+  background: rgba(45, 106, 79, 0.2);
+  border: 1px solid rgba(45, 106, 79, 0.3);
+  color: #4caf50;
+}
+
+.mensaje-estado.error {
+  background: rgba(198, 40, 40, 0.2);
+  border: 1px solid rgba(198, 40, 40, 0.3);
+  color: #ef5350;
+}
+
+/* CONTENIDO - 2 columnas */
+.mesa-view-content {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 20px;
+}
+
+/* COLUMNA MENÚ */
+.columna-menu {
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 20px;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+}
+
+.columna-menu h2 {
+  margin-top: 0;
+  color: #ff4500;
+  font-size: 1.2rem;
+}
+
+.menu-productos {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.categoria-menu h5 {
+  color: #ff4500;
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 5px;
+}
+
+.productos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.producto-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.producto-item:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.producto-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex: 1;
+}
+
+.producto-nombre {
+  font-size: 0.9rem;
+}
+
+.producto-precio {
+  color: #4caf50;
+  font-weight: bold;
+  font-size: 0.85rem;
+}
+
+.producto-accion {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.producto-accion input {
+  width: 45px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #1a1a1a;
+  color: white;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.btn-agregar {
+  background: #ff4500;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.btn-agregar:hover:not(:disabled) {
+  background: #e03e00;
+  transform: scale(1.05);
+}
+
+.btn-agregar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* COLUMNA PEDIDO */
+.columna-pedido {
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+}
+
+/* Reserva */
+.reserva-section {
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.reserva-activa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reserva-icono {
+  font-size: 1.5rem;
+}
+
+.reserva-info {
+  flex: 1;
+}
+
+.reserva-cliente {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.reserva-cliente strong {
+  color: #f59e0b;
+}
+
+.reserva-detalle {
+  margin: 2px 0 0 0;
+  font-size: 0.75rem;
+  color: #b0b0b0;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-cancelar-reserva {
+  background: #c62828;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.sin-reserva {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sin-reserva p {
+  margin: 0;
+  color: #b0b0b0;
+}
+
+.btn-reservar {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Personas */
+.personas-grupo {
+  display: flex;
+  gap: 20px;
+  background: rgba(255,255,255,0.05);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.personas-grupo label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.personas-grupo input {
+  width: 50px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #1a1a1a;
+  color: white;
+  text-align: center;
+}
+
+/* Items pedido */
+.items-pedido-container {
+  flex: 1;
+}
+
+.items-pedido-container h4 {
+  margin: 0 0 8px 0;
+  color: #ff4500;
+}
+
+.sin-items {
+  color: #666;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.items-pedido {
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  padding: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.item-pedido {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.85rem;
+}
+
+.item-pedido:last-child {
+  border-bottom: none;
+}
+
+.item-cantidad {
+  color: #ff4500;
+  font-weight: bold;
+  min-width: 30px;
+}
+
+.item-nombre {
+  flex: 1;
+  padding: 0 10px;
+}
+
+.item-subtotal {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+/* Total */
+.total-display {
+  background: #2d6a4f;
+  padding: 15px 20px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.total-monto {
+  font-size: 1.4rem;
+  color: #ffd700;
+}
+
+/* Botones de acción */
+.acciones-pedido {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.acciones-pedido button {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.acciones-pedido button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-calcular {
+  background: #444;
+  color: white;
+}
+
+.btn-calcular:hover:not(:disabled) {
+  background: #555;
+}
+
+.btn-guardar {
+  background: #2e7d32;
+  color: white;
+}
+
+.btn-guardar:hover:not(:disabled) {
+  background: #1b5e20;
+  transform: translateY(-2px);
+}
+
+.btn-cobrar {
+  background: #ff4500;
+  color: white;
+}
+
+.btn-cobrar:hover:not(:disabled) {
+  background: #e03e00;
+  transform: translateY(-2px);
+}
+
+.btn-cancelar-pedido {
+  background: #c62828;
+  color: white;
+}
+
+.btn-cancelar-pedido:hover:not(:disabled) {
+  background: #b71c1c;
+  transform: translateY(-2px);
+}
+
+/* RESPONSIVE */
+@media (max-width: 992px) {
+  .mesa-view-content {
+    grid-template-columns: 1fr;
+  }
+
+  .columna-menu {
+    max-height: 400px;
+  }
+
+  .columna-pedido {
+    max-height: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .mesa-view-header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .mesa-view-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .header-badges {
+    justify-content: center;
+  }
+
+  .personas-grupo {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

@@ -1,20 +1,17 @@
 // src/components/Mesas/GrillaMesas.jsx
-import React, { useState } from "react";
-import { useRestaurante } from "../../context/RestauranteContext";
-import MesaCard from "./MesaCard";
-import MesaModal from "./MesaModal";
-import "./GrillaMesas.css";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useRestaurante } from '../../context/RestauranteContext';
+import MesaCard from './MesaCard';
+import './GrillaMesas.css';
 
 const GrillaMesas = ({ onVolver }) => {
   const { mesas } = useRestaurante();
-  const [mesaSeleccionada, setMesaSeleccionada] = useState(null);
+  const navigate = useNavigate();
 
   const handleAbrirMesa = (mesaId) => {
-    setMesaSeleccionada(mesaId);
-  };
-
-  const handleCerrarModal = () => {
-    setMesaSeleccionada(null);
+    // ✅ Navegar a la vista de la mesa en lugar de abrir modal
+    navigate(`/mesa/${mesaId}`);
   };
 
   return (
@@ -36,10 +33,6 @@ const GrillaMesas = ({ onVolver }) => {
           />
         ))}
       </div>
-
-      {mesaSeleccionada && (
-        <MesaModal mesaId={mesaSeleccionada} onClose={handleCerrarModal} />
-      )}
     </div>
   );
 };
