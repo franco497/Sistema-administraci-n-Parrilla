@@ -151,6 +151,8 @@
   background: rgba(255,255,255,0.05);
   border-radius: 6px;
   transition: background 0.2s;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .producto-item:hover {
@@ -162,10 +164,12 @@
   gap: 12px;
   align-items: center;
   flex: 1;
+  min-width: 100px;
 }
 
 .producto-nombre {
   font-size: 0.9rem;
+  color: #e0e0e0;
 }
 
 .producto-precio {
@@ -174,21 +178,77 @@
   font-size: 0.85rem;
 }
 
+/* ✅ CONTENEDOR DE ACCIONES DEL PRODUCTO */
 .producto-accion {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-.producto-accion input {
-  width: 45px;
-  padding: 4px 6px;
-  border-radius: 4px;
+/* Control de cantidad con botones + y - */
+.cantidad-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
   border: 1px solid #444;
-  background: #1a1a1a;
+  overflow: hidden;
+}
+
+.btn-cantidad {
+  background: transparent;
   color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: bold;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.btn-cantidad:hover:not(:disabled) {
+  background: rgba(255,255,255,0.1);
+}
+
+.btn-cantidad:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.btn-cantidad:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-cantidad-menos {
+  color: #ff6b6b;
+}
+
+.btn-cantidad-menos:hover:not(:disabled) {
+  background: rgba(255, 107, 107, 0.15);
+}
+
+.btn-cantidad-mas {
+  color: #4caf50;
+}
+
+.btn-cantidad-mas:hover:not(:disabled) {
+  background: rgba(76, 175, 80, 0.15);
+}
+
+.cantidad-valor {
+  min-width: 24px;
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: white;
+  padding: 0 4px;
 }
 
 .btn-agregar {
@@ -196,22 +256,24 @@
   color: white;
   border: none;
   border-radius: 4px;
-  width: 28px;
-  height: 28px;
+  padding: 6px 12px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.75rem;
   font-weight: bold;
   transition: all 0.2s;
+  white-space: nowrap;
+  min-height: 30px;
 }
 
 .btn-agregar:hover:not(:disabled) {
   background: #e03e00;
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 .btn-agregar:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* COLUMNA PEDIDO */
@@ -453,7 +515,11 @@
   transform: translateY(-2px);
 }
 
-/* RESPONSIVE */
+/* ==========================================
+   MEDIA QUERIES
+   ========================================== */
+
+/* RESPONSIVE - TABLET */
 @media (max-width: 992px) {
   .mesa-view-content {
     grid-template-columns: 1fr;
@@ -468,6 +534,7 @@
   }
 }
 
+/* RESPONSIVE - MÓVIL GRANDE */
 @media (max-width: 600px) {
   .mesa-view-header {
     flex-direction: column;
@@ -486,5 +553,54 @@
   .personas-grupo {
     flex-direction: column;
     gap: 8px;
+  }
+
+  .producto-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .producto-info {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .producto-accion {
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .cantidad-control {
+    flex: 1;
+    max-width: 120px;
+  }
+
+  .btn-cantidad {
+    width: 36px;
+    height: 36px;
+    font-size: 1.4rem;
+  }
+
+  .btn-agregar {
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+  }
+}
+
+/* RESPONSIVE - MÓVIL PEQUEÑO */
+@media (max-width: 400px) {
+  .producto-accion {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cantidad-control {
+    max-width: none;
+  }
+
+  .btn-agregar {
+    min-width: 100%;
   }
 }

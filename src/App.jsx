@@ -6,7 +6,7 @@ import { RestauranteProvider } from "./context/RestauranteContext";
 import Login from "./pages/login";
 import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
-import MesaView from "./pages/MesaView";  // ← IMPORTAR
+import MesaView from "./pages/MesaView";  
 import NotFound from "./pages/NotFound";
 
 function App() {

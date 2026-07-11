@@ -192,6 +192,7 @@ const MesaView = () => {
 
         try {
           generarTicketPDF(pedidoCompleto, itemsPedido, parseInt(mesaId));
+          console.log("✅ Ticket generado correctamente");
         } catch (pdfError) {
           console.error("Error generando PDF:", pdfError);
         }
@@ -199,10 +200,14 @@ const MesaView = () => {
         setMensaje(`✅ Cobrado: $${result.total.toLocaleString()}`);
         setItemsPedido([]);
         setTotal(0);
+
+        // ✅ Redirigir a la grilla de mesas después de cobrar
         setTimeout(() => {
           setMensaje("");
-          navigate("/dashboard");
-        }, 2000);
+          navigate("/dashboard", { state: { mostrarMesas: true } });
+        }, 1500);
+      } else {
+        setMensaje(`❌ Error al cobrar: ${result.error}`);
       }
     } catch (error) {
       console.error("Error cobrando:", error);
@@ -349,19 +354,49 @@ const MesaView = () => {
                             </span>
                           </div>
                           <div className="producto-accion">
-                            <input
-                              type="number"
-                              min="0"
-                              max="99"
-                              value={cantidades[producto.id_producto] || 0}
-                              onChange={(e) =>
-                                handleCantidadChange(
-                                  producto.id_producto,
-                                  e.target.value,
-                                )
-                              }
-                              disabled={loading}
-                            />
+                            <div className="cantidad-control">
+                              <button
+                                className="btn-cantidad btn-cantidad-menos"
+                                onClick={() => {
+                                  const actual =
+                                    cantidades[producto.id_producto] || 0;
+                                  if (actual > 0) {
+                                    handleCantidadChange(
+                                      producto.id_producto,
+                                      actual - 1,
+                                    );
+                                  }
+                                }}
+                                disabled={
+                                  loading ||
+                                  (cantidades[producto.id_producto] || 0) <= 0
+                                }
+                              >
+                                −
+                              </button>
+                              <span className="cantidad-valor">
+                                {cantidades[producto.id_producto] || 0}
+                              </span>
+                              <button
+                                className="btn-cantidad btn-cantidad-mas"
+                                onClick={() => {
+                                  const actual =
+                                    cantidades[producto.id_producto] || 0;
+                                  if (actual < 99) {
+                                    handleCantidadChange(
+                                      producto.id_producto,
+                                      actual + 1,
+                                    );
+                                  }
+                                }}
+                                disabled={
+                                  loading ||
+                                  (cantidades[producto.id_producto] || 0) >= 99
+                                }
+                              >
+                                +
+                              </button>
+                            </div>
                             <button
                               className="btn-agregar"
                               onClick={() =>
@@ -372,9 +407,9 @@ const MesaView = () => {
                                 !(cantidades[producto.id_producto] > 0)
                               }
                             >
-                              +
+                              Agregar al pedido
                             </button>
-                          </div>
+                          </div>{" "}
                         </div>
                       ))}
                     </div>
@@ -437,18 +472,6 @@ const MesaView = () => {
             )}
           </div>
 
-          {/* Personas */}
-          {/*           <div className="personas-grupo">
-            <label>
-              👨 Adultos:
-              <input type="number" min="0" value={adultos} onChange={(e) => setAdults(parseInt(e.target.value) || 0)} />
-            </label>
-            <label>
-              👦 Menores:
-              <input type="number" min="0" value={menores} onChange={(e) => setMenores(parseInt(e.target.value) || 0)} />
-            </label>
-          </div>
- */}
           {/* Items del pedido */}
           <div className="items-pedido-container">
             <h4>📋 Pedido Actual</h4>
