@@ -5,6 +5,8 @@ import { useRestaurante } from "../context/RestauranteContext";
 import FormularioReservaSimple from "../components/Mesas/FormularioReservaSimple";
 import { generarFacturaPDF, generarTicketPDF } from "../services/pdfService";
 import "./MesaView.css";
+import { supabase } from "../lib/supabase";
+import SelectorMozo from "../components/Mesas/SelectorMozo";
 
 const MesaView = () => {
   const { mesaId } = useParams();
@@ -23,11 +25,17 @@ const MesaView = () => {
     cancelarReserva,
     obtenerReservaPorMesa,
     crearPedido,
+    actualizarPedido,
+    mozos,
+    mozosActivos,
+    asignarMozo,
+    removerMozo,
   } = useRestaurante();
 
   const mesa = mesas[parseInt(mesaId)];
   const reservaExistente = obtenerReservaPorMesa(parseInt(mesaId));
   const pedidoId = pedidosActivos[parseInt(mesaId)];
+  const mozoActual = mesa?.mozoNombre || null;
 
   // Estado local para el nombre de la reserva
   const [nombreReservaLocal, setNombreReservaLocal] = useState("");
@@ -40,6 +48,8 @@ const MesaView = () => {
   const [loading, setLoading] = useState(false);
   const [cantidades, setCantidades] = useState({});
   const [mensaje, setMensaje] = useState("");
+  const [editandoPedido, setEditandoPedido] = useState(false);
+  const [cantidadesEdit, setCantidadesEdit] = useState({});
 
   const handleVolver = () => {
     // ✅ Volver al dashboard y mostrar la grilla de mesas
@@ -285,6 +295,58 @@ const MesaView = () => {
     }
   };
 
+  const iniciarEdicion = () => {
+    const cantidadesActuales = {};
+    itemsPedido.forEach((item) => {
+      cantidadesActuales[item.id_producto] = item.cantidad;
+    });
+    setCantidadesEdit(cantidadesActuales);
+    setEditandoPedido(true);
+    setMensaje("✏️ Editando pedido - Modifica las cantidades");
+  };
+
+  const cancelarEdicion = () => {
+    setEditandoPedido(false);
+    setCantidadesEdit({});
+    setMensaje("");
+  };
+
+  const guardarEdicion = async () => {
+    setLoading(true);
+    setMensaje("🔄 Guardando cambios...");
+
+    try {
+      // Preparar los items actualizados
+      const itemsActualizados = Object.entries(cantidadesEdit).map(
+        ([productoId, cantidad]) => ({
+          id_producto: parseInt(productoId),
+          cantidad: cantidad,
+        }),
+      );
+
+      // ✅ Usar la función del Context
+      const result = await actualizarPedido(
+        parseInt(mesaId),
+        itemsActualizados,
+      );
+
+      if (result.success) {
+        await cargarItemsPedido();
+        setEditandoPedido(false);
+        setCantidadesEdit({});
+        setMensaje("✅ Pedido actualizado correctamente");
+        setTimeout(() => setMensaje(""), 2000);
+      } else {
+        setMensaje(`❌ Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Error guardando edición:", error);
+      setMensaje("❌ Error al guardar los cambios");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Agrupar productos por categoría
   const productosPorCategoria = {};
   categorias.forEach((cat) => {
@@ -472,12 +534,102 @@ const MesaView = () => {
             )}
           </div>
 
+          {/* Sección de Mozo */}
+          <div className="mozo-section">
+            <SelectorMozo
+              mesaId={parseInt(mesaId)}
+              mozos={mozos}
+              mozoActual={mozoActual}
+              onAsignar={asignarMozo}
+              onRemover={removerMozo}
+              loading={loading}
+            />
+          </div>
+
+          {/* Items del pedido */}
           {/* Items del pedido */}
           <div className="items-pedido-container">
-            <h4>📋 Pedido Actual</h4>
+            <div className="items-header">
+              <h4>📋 Pedido Actual</h4>
+              {itemsPedido.length > 0 && !editandoPedido && (
+                <button className="btn-editar-pedido" onClick={iniciarEdicion}>
+                  ✏️ Editar
+                </button>
+              )}
+              {editandoPedido && (
+                <div className="acciones-edicion">
+                  <button
+                    className="btn-guardar-edicion"
+                    onClick={guardarEdicion}
+                  >
+                    ✅ Guardar cambios
+                  </button>
+                  <button
+                    className="btn-cancelar-edicion"
+                    onClick={cancelarEdicion}
+                  >
+                    ❌ Cancelar
+                  </button>
+                </div>
+              )}
+            </div>
+
             {itemsPedido.length === 0 ? (
               <p className="sin-items">No hay items cargados</p>
+            ) : editandoPedido ? (
+              // Modo edición - mostrar inputs para cada item
+              <div className="items-pedido-edicion">
+                {itemsPedido.map((item) => (
+                  <div key={item.id_detalle} className="item-pedido-edit">
+                    <span className="item-nombre">
+                      {item.productos?.nombre || "Producto"}
+                    </span>
+                    <div className="item-edit-control">
+                      <button
+                        className="btn-edit-cantidad"
+                        onClick={() => {
+                          const actual = cantidadesEdit[item.id_producto] || 0;
+                          if (actual > 0) {
+                            setCantidadesEdit((prev) => ({
+                              ...prev,
+                              [item.id_producto]: actual - 1,
+                            }));
+                          }
+                        }}
+                        disabled={
+                          loading ||
+                          (cantidadesEdit[item.id_producto] || 0) <= 0
+                        }
+                      >
+                        −
+                      </button>
+                      <span className="cantidad-edit-valor">
+                        {cantidadesEdit[item.id_producto] || 0}
+                      </span>
+                      <button
+                        className="btn-edit-cantidad"
+                        onClick={() => {
+                          const actual = cantidadesEdit[item.id_producto] || 0;
+                          setCantidadesEdit((prev) => ({
+                            ...prev,
+                            [item.id_producto]: actual + 1,
+                          }));
+                        }}
+                        disabled={loading}
+                      >
+                        +
+                      </button>
+                      <span className="item-subtotal-edit">
+                        $
+                        {(cantidadesEdit[item.id_producto] || 0) *
+                          item.precio_unitario}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
+              // Modo visualización normal
               <div className="items-pedido">
                 {itemsPedido.map((item) => (
                   <div key={item.id_detalle} className="item-pedido">

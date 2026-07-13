@@ -1,0 +1,175 @@
+/* src/components/Mesas/SelectorMozo.css */
+
+.selector-mozo {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+/* Mozo asignado */
+.mozo-asignado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.mozo-icono {
+  font-size: 1.2rem;
+}
+
+.mozo-nombre {
+  flex: 1;
+  color: #4caf50;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.btn-cambiar-mozo {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.btn-cambiar-mozo:hover:not(:disabled) {
+  background: #d97706;
+}
+
+.btn-remover-mozo {
+  background: #c62828;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.btn-remover-mozo:hover:not(:disabled) {
+  background: #b71c1c;
+}
+
+/* Botón asignar mozo */
+.btn-asignar-mozo {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+  border: 1px dashed rgba(76, 175, 80, 0.3);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.9rem;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.btn-asignar-mozo:hover:not(:disabled) {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: #4caf50;
+}
+
+/* Lista de mozos desplegable */
+.lista-mozos {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.lista-mozos h4 {
+  margin: 0 0 10px 0;
+  color: #ff4500;
+  font-size: 0.9rem;
+}
+
+.sin-mozos {
+  color: #666;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.mozo-opcion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.05);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 4px;
+}
+
+.mozo-opcion:hover:not(:disabled) {
+  background: rgba(255,255,255,0.1);
+}
+
+.mozo-opcion:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mozo-opcion-nombre {
+  color: #e0e0e0;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.mozo-opcion-telefono {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.btn-cerrar-lista {
+  width: 100%;
+  padding: 6px;
+  background: rgba(255,255,255,0.05);
+  color: #888;
+  border: 1px solid #333;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-top: 6px;
+  transition: all 0.2s;
+}
+
+.btn-cerrar-lista:hover {
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .mozo-asignado {
+    flex-wrap: wrap;
+  }
+
+  .lista-mozos {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90%;
+    max-height: 60vh;
+  }
+}

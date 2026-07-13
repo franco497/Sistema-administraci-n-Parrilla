@@ -21,9 +21,12 @@ const crearEstadoInicialMesas = () => {
       estado: "disponible",
       adultos: 0,
       menores: 0,
-      pedidoId: null, // ID del pedido activo
+      consumos: {},
       reservaId: null,
       reservaNombre: "",
+      pedidoId: null,
+      mozoId: null,
+      mozoNombre: "",
     };
   }
   return mesas;
@@ -37,6 +40,8 @@ export const RestauranteProvider = ({ children }) => {
   const [pedidosActivos, setPedidosActivos] = useState({});
   const [loading, setLoading] = useState(false);
   const [session, setSession] = useState(null);
+  const [mozos, setMozos] = useState([]);
+  const [mozosActivos, setMozosActivos] = useState({});
 
   // Obtener sesión del usuario
   useEffect(() => {
@@ -146,6 +151,16 @@ export const RestauranteProvider = ({ children }) => {
 
       if (pedError) throw pedError;
       console.log("📊 Pedidos activos encontrados:", pedidosData?.length || 0);
+
+      const { data: mozosData, error: mozosError } = await supabase
+        .from("mozos")
+        .select("*")
+        .eq("activo", true)
+        .order("nombre");
+
+      if (mozosError) throw mozosError;
+      setMozos(mozosData || []);
+      console.log("✅ Mozos cargados:", mozosData?.length || 0);
 
       // 5. ✅ CREAR EL ESTADO DE LAS MESAS DESDE CERO
       const nuevasMesas = {};
@@ -343,6 +358,85 @@ export const RestauranteProvider = ({ children }) => {
       return { success: true, data: data[0] };
     } catch (error) {
       console.error("❌ Error agregando item:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // --- FUNCIÓN: Actualizar pedido completo (para edición) ---
+  const actualizarPedido = async (mesaId, itemsActualizados) => {
+    try {
+      console.log("🔄 actualizarPedido - mesaId:", mesaId);
+      console.log("📦 items actualizados:", itemsActualizados);
+
+      const pedidoId = pedidosActivos[mesaId];
+      if (!pedidoId) {
+        throw new Error("No hay pedido activo para esta mesa");
+      }
+
+      // 1. Obtener los items actuales del pedido
+      const { data: itemsActuales, error: getError } = await supabase
+        .from("detalle_pedido")
+        .select("id_detalle")
+        .eq("id_pedido", pedidoId);
+
+      if (getError) throw getError;
+
+      // 2. Eliminar todos los items actuales
+      if (itemsActuales && itemsActuales.length > 0) {
+        const idsEliminar = itemsActuales.map((item) => item.id_detalle);
+        const { error: deleteError } = await supabase
+          .from("detalle_pedido")
+          .delete()
+          .in("id_detalle", idsEliminar);
+
+        if (deleteError) throw deleteError;
+        console.log(`✅ Eliminados ${idsEliminar.length} items`);
+      }
+
+      // 3. Insertar los nuevos items
+      let totalPedido = 0;
+      for (const item of itemsActualizados) {
+        if (item.cantidad > 0) {
+          // Buscar el producto para obtener el precio
+          const producto = productos.find(
+            (p) => p.id_producto === item.id_producto,
+          );
+          if (!producto) {
+            console.warn(`⚠️ Producto ${item.id_producto} no encontrado`);
+            continue;
+          }
+
+          const subtotal = producto.precio * item.cantidad;
+          totalPedido += subtotal;
+
+          const { error: insertError } = await supabase
+            .from("detalle_pedido")
+            .insert([
+              {
+                id_pedido: pedidoId,
+                id_producto: item.id_producto,
+                cantidad: item.cantidad,
+                precio_unitario: producto.precio,
+                subtotal: subtotal,
+              },
+            ]);
+
+          if (insertError) throw insertError;
+        }
+      }
+
+      // 4. Actualizar el total del pedido
+      const { error: updateError } = await supabase
+        .from("pedidos")
+        .update({ total: totalPedido })
+        .eq("id_pedido", pedidoId);
+
+      if (updateError) throw updateError;
+
+      console.log(`✅ Pedido #${pedidoId} actualizado. Total: $${totalPedido}`);
+      return { success: true, total: totalPedido };
+    } catch (error) {
+      console.error("❌ Error actualizando pedido:", error);
       return { success: false, error: error.message };
     }
   };
@@ -681,6 +775,53 @@ export const RestauranteProvider = ({ children }) => {
     }
   };
 
+  // --- FUNCIÓN: Asignar mozo a una mesa ---
+  const asignarMozo = (mesaId, mozoId) => {
+    const mozo = mozos.find((m) => m.id_mozo === mozoId);
+    if (!mozo) {
+      console.error("❌ Mozo no encontrado");
+      return { success: false, error: "Mozo no encontrado" };
+    }
+
+    setMesas((prev) => ({
+      ...prev,
+      [mesaId]: {
+        ...prev[mesaId],
+        mozoId: mozo.id_mozo,
+        mozoNombre: `${mozo.nombre} ${mozo.apellido}`,
+      },
+    }));
+
+    setMozosActivos((prev) => ({
+      ...prev,
+      [mesaId]: mozo.id_mozo,
+    }));
+
+    console.log(
+      `✅ Mozo ${mozo.nombre} ${mozo.apellido} asignado a mesa ${mesaId}`,
+    );
+    return { success: true };
+  };
+
+  // --- FUNCIÓN: Remover mozo de una mesa ---
+  const removerMozo = (mesaId) => {
+    setMesas((prev) => ({
+      ...prev,
+      [mesaId]: {
+        ...prev[mesaId],
+        mozoId: null,
+        mozoNombre: "",
+      },
+    }));
+
+    const newMozosActivos = { ...mozosActivos };
+    delete newMozosActivos[mesaId];
+    setMozosActivos(newMozosActivos);
+
+    console.log(`✅ Mozo removido de mesa ${mesaId}`);
+    return { success: true };
+  };
+
   // --- FUNCIÓN: Obtener reserva por mesa ---
   const obtenerReservaPorMesa = (mesaId) => {
     return reservas.find((r) => r.id_mesa === mesaId);
@@ -702,6 +843,11 @@ export const RestauranteProvider = ({ children }) => {
     crearReserva,
     cancelarReserva,
     obtenerReservaPorMesa,
+    actualizarPedido,
+    mozos,
+    mozosActivos,
+    asignarMozo,
+    removerMozo,
   };
 
   return (
