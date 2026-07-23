@@ -152,9 +152,11 @@ export const RestauranteProvider = ({ children }) => {
       if (pedError) throw pedError;
       console.log("📊 Pedidos activos encontrados:", pedidosData?.length || 0);
 
+      //5. asignar mozo
+
       const { data: mozosData, error: mozosError } = await supabase
         .from("mozos")
-        .select("*")
+        .select("id_mozo, nombre, activo")
         .eq("activo", true)
         .order("nombre");
 
@@ -162,7 +164,7 @@ export const RestauranteProvider = ({ children }) => {
       setMozos(mozosData || []);
       console.log("✅ Mozos cargados:", mozosData?.length || 0);
 
-      // 5. ✅ CREAR EL ESTADO DE LAS MESAS DESDE CERO
+      // 6. ✅ CREAR EL ESTADO DE LAS MESAS DESDE CERO
       const nuevasMesas = {};
 
       // Inicializar todas las mesas (1-47)
@@ -217,6 +219,9 @@ export const RestauranteProvider = ({ children }) => {
 
       console.log("✅ Todos los datos cargados correctamente");
       console.log("📊 Estado final de mesas:", nuevasMesas);
+      console.log("🔍 Mozo encontrado:", mozo);
+      console.log("🔍 mozo.nombre:", mozo.nombre);
+      console.log("🔍 Guardando mozoNombre:", mozo.nombre);
     } catch (error) {
       console.error("❌ Error cargando datos:", error);
     } finally {
@@ -288,14 +293,10 @@ export const RestauranteProvider = ({ children }) => {
     try {
       console.log("📝 Agregando item:", { mesaId, productoId, cantidad });
 
-      // Verificar si la mesa está reservada
-      const mesaActual = mesas[mesaId];
-      console.log("🪑 Estado de la mesa:", mesaActual?.estado);
-
       let pedidoId = pedidosActivos[mesaId];
       console.log("🔍 pedidoId actual:", pedidoId);
 
-      // Si no hay pedido, crear uno (incluso si está reservada)
+      // Si no hay pedido, crear uno
       if (!pedidoId) {
         console.log("🆕 No hay pedido, creando uno nuevo...");
         const result = await crearPedido(mesaId);
@@ -304,16 +305,18 @@ export const RestauranteProvider = ({ children }) => {
         }
         pedidoId = result.data.id_pedido;
         console.log("✅ Nuevo pedido creado con ID:", pedidoId);
+      }
 
-        // Actualizar pedidosActivos localmente
-        setPedidosActivos((prev) => {
-          const newState = {
-            ...prev,
-            [mesaId]: pedidoId,
-          };
-          console.log("📊 pedidosActivos actualizado:", newState);
-          return newState;
-        });
+      // ✅ BUSCAR SI EL PRODUCTO YA EXISTE EN EL PEDIDO
+      const { data: itemsExistentes, error: findError } = await supabase
+        .from("detalle_pedido")
+        .select("*")
+        .eq("id_pedido", pedidoId)
+        .eq("id_producto", productoId);
+
+      if (findError) {
+        console.error("❌ Error buscando item existente:", findError);
+        throw findError;
       }
 
       // Buscar producto para obtener precio
@@ -321,41 +324,65 @@ export const RestauranteProvider = ({ children }) => {
       if (!producto) {
         throw new Error("Producto no encontrado");
       }
-      console.log(
-        "📦 Producto encontrado:",
-        producto.nombre,
-        "Precio:",
-        producto.precio,
-      );
 
       const precioUnitario = producto.precio;
-      const subtotal = precioUnitario * cantidad;
-      console.log("💰 Subtotal calculado:", subtotal);
 
-      const { data, error } = await supabase
-        .from("detalle_pedido")
-        .insert([
-          {
-            id_pedido: pedidoId,
-            id_producto: productoId,
-            cantidad: cantidad,
-            precio_unitario: precioUnitario,
-            subtotal: subtotal,
-          },
-        ])
-        .select();
+      if (itemsExistentes && itemsExistentes.length > 0) {
+        // ✅ EL PRODUCTO YA EXISTE → ACTUALIZAR CANTIDAD
+        const itemExistente = itemsExistentes[0];
+        const nuevaCantidad = itemExistente.cantidad + cantidad;
+        const nuevoSubtotal = precioUnitario * nuevaCantidad;
 
-      if (error) {
-        console.error("❌ Error en Supabase al agregar item:", error);
-        throw error;
+        console.log(
+          `📦 Producto ya existe. Cantidad actual: ${itemExistente.cantidad}, Nueva: ${nuevaCantidad}`,
+        );
+
+        const { data, error } = await supabase
+          .from("detalle_pedido")
+          .update({
+            cantidad: nuevaCantidad,
+            subtotal: nuevoSubtotal,
+          })
+          .eq("id_detalle", itemExistente.id_detalle)
+          .select();
+
+        if (error) {
+          console.error("❌ Error actualizando item:", error);
+          throw error;
+        }
+
+        console.log("✅ Item actualizado:", data[0]);
+      } else {
+        // ✅ PRODUCTO NUEVO → CREAR NUEVO REGISTRO
+        const subtotal = precioUnitario * cantidad;
+
+        console.log("📦 Producto nuevo, creando registro...");
+
+        const { data, error } = await supabase
+          .from("detalle_pedido")
+          .insert([
+            {
+              id_pedido: pedidoId,
+              id_producto: productoId,
+              cantidad: cantidad,
+              precio_unitario: precioUnitario,
+              subtotal: subtotal,
+            },
+          ])
+          .select();
+
+        if (error) {
+          console.error("❌ Error en Supabase al agregar item:", error);
+          throw error;
+        }
+
+        console.log("✅ Item agregado:", data[0]);
       }
-
-      console.log("✅ Item agregado:", data[0]);
 
       // Actualizar total del pedido
       await actualizarTotalPedido(pedidoId);
 
-      return { success: true, data: data[0] };
+      return { success: true };
     } catch (error) {
       console.error("❌ Error agregando item:", error);
       return { success: false, error: error.message };
@@ -452,7 +479,10 @@ export const RestauranteProvider = ({ children }) => {
 
       if (detError) throw detError;
 
-      const total = detalles.reduce((sum, item) => sum + item.subtotal, 0);
+      const total = detalles.reduce(
+        (sum, item) => sum + (parseFloat(item.subtotal) || 0),
+        0,
+      );
 
       const { error } = await supabase
         .from("pedidos")
@@ -461,6 +491,7 @@ export const RestauranteProvider = ({ children }) => {
 
       if (error) throw error;
 
+      console.log(`💰 Total actualizado: $${total}`);
       return { success: true, total };
     } catch (error) {
       console.error("❌ Error actualizando total:", error);
@@ -788,7 +819,7 @@ export const RestauranteProvider = ({ children }) => {
       [mesaId]: {
         ...prev[mesaId],
         mozoId: mozo.id_mozo,
-        mozoNombre: `${mozo.nombre} ${mozo.apellido}`,
+        mozoNombre: mozo.nombre,
       },
     }));
 
@@ -797,9 +828,7 @@ export const RestauranteProvider = ({ children }) => {
       [mesaId]: mozo.id_mozo,
     }));
 
-    console.log(
-      `✅ Mozo ${mozo.nombre} ${mozo.apellido} asignado a mesa ${mesaId}`,
-    );
+    console.log(`✅ Mozo ${mozo.nombre} asignado a mesa ${mesaId}`);
     return { success: true };
   };
 

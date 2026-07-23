@@ -672,6 +672,16 @@
   margin-bottom: 8px;
 }
 
+.badge-mozo {
+  background: #2d6a4f;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
 /* ==========================================
    MEDIA QUERIES
    ========================================== */

@@ -36,6 +36,7 @@ const MesaView = () => {
   const reservaExistente = obtenerReservaPorMesa(parseInt(mesaId));
   const pedidoId = pedidosActivos[parseInt(mesaId)];
   const mozoActual = mesa?.mozoNombre || null;
+  console.log("🔍 mozoActual:", mozoActual); // Para depurar
 
   // Estado local para el nombre de la reserva
   const [nombreReservaLocal, setNombreReservaLocal] = useState("");
@@ -201,7 +202,13 @@ const MesaView = () => {
         };
 
         try {
-          generarTicketPDF(pedidoCompleto, itemsPedido, parseInt(mesaId));
+          generarTicketPDF(
+            pedidoCompleto,
+            itemsPedido,
+            parseInt(mesaId),
+            { nombre: nombreCliente }, // ← Cliente (igual que antes)
+            mozoActual, // ← MOZO (NUEVO)
+          );
           console.log("✅ Ticket generado correctamente");
         } catch (pdfError) {
           console.error("Error generando PDF:", pdfError);
@@ -378,6 +385,8 @@ const MesaView = () => {
           {nombreReservaLocal && (
             <span className="badge-reservada">📅 {nombreReservaLocal}</span>
           )}
+          {/* ✅ AGREGAR MOZO ASIGNADO */}
+          {mozoActual && <span className="badge-mozo">👨‍🍳 {mozoActual}</span>}
         </div>
       </div>
 
@@ -538,11 +547,11 @@ const MesaView = () => {
           <div className="mozo-section">
             <SelectorMozo
               mesaId={parseInt(mesaId)}
-              mozos={mozos}
-              mozoActual={mozoActual}
-              onAsignar={asignarMozo}
-              onRemover={removerMozo}
-              loading={loading}
+              mozos={mozos} // ← Debe ser un array
+              mozoActual={mozoActual} // ← Debe ser string o null
+              onAsignar={asignarMozo} // ← Función
+              onRemover={removerMozo} // ← Función
+              loading={loading} // ← boolean
             />
           </div>
 

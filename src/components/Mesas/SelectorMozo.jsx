@@ -2,13 +2,14 @@
 import React, { useState } from "react";
 import "./SelectorMozo.css";
 
+// ✅ Asegurar que todos los props están correctos
 const SelectorMozo = ({
-  mesaId,
-  mozos,
-  mozoActual,
-  onAsignar,
-  onRemover,
-  loading,
+  mesaId,           // ID de la mesa
+  mozos,            // Lista de mozos disponibles
+  mozoActual,       // Nombre del mozo asignado (string o null)
+  onAsignar,        // Función para asignar mozo
+  onRemover,        // Función para remover mozo
+  loading,          // Estado de carga
 }) => {
   const [mostrarSelector, setMostrarSelector] = useState(false);
 
@@ -23,6 +24,9 @@ const SelectorMozo = ({
       setMostrarSelector(false);
     }
   };
+
+  console.log('🔍 SelectorMozo - mozoActual:', mozoActual);
+  console.log('🔍 SelectorMozo - mesaId:', mesaId);
 
   return (
     <div className="selector-mozo">
@@ -69,9 +73,8 @@ const SelectorMozo = ({
                 disabled={loading}
               >
                 <span className="mozo-opcion-nombre">
-                  {mozo.nombre} {mozo.apellido}
+                  {mozo.nombre}
                 </span>
-                <span className="mozo-opcion-telefono">{mozo.telefono}</span>
               </button>
             ))
           )}
